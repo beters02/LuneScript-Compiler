@@ -11,15 +11,21 @@ export type TokenType = "op" | "expr" | "func" | "def"
 local testByteStr = [[
     a = 1
     a++
+    a = a + 1
+    a--
     print(a)
 ]]
 
 local op = {
     ["="] = "=",
+    ["+"] = "+",
+    ["-"] = "-",
+    ["++"] = "+=1",
+    ["--"] = "-=1"
 }
 
 local expr = {
-    ["++"] = "+=1"
+    
 }
 
 local func = {
@@ -34,11 +40,15 @@ local ast = {
 
 local reference = {op = op, expr = expr, func = func}
 
-local function createToken(tokenStr): Token
+local function createToken(tokens, tokenStr): Token
+
     local isEnd = false
     if string.match(tokenStr, "\n") then
         tokenStr = string.gsub(tokenStr, "\n", "")
-        isEnd = true
+        
+        if not tokens[#tokens] or not tokens[#tokens]._isEnd then
+            isEnd = true
+        end
     end
 
     local foundType = false
@@ -72,7 +82,7 @@ local function lex(byteStr: string)
         local token = false
 
         if tokenStr ~= "" and tokenStr ~= "\n" then
-            token = createToken(tokenStr)
+            token = createToken(tokens, tokenStr)
             table.insert(tokens, token)
             currtok = ""
             return token
@@ -96,11 +106,11 @@ local function lex(byteStr: string)
         end
 
         if c ~= "" then
-            if op[c] then
+            if op[c] and not op[c..c] then
                 finalizeToken(currtok)
                 finalizeToken(c)
                 return
-            elseif expr[lastc..c] then
+            elseif op[lastc..c] then
                 finalizeToken(string.sub(currtok, 1, string.len(currtok)-1))
                 finalizeToken(lastc..c)
                 return
