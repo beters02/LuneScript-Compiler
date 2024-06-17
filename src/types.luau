@@ -16,6 +16,8 @@ export type Keys = {
 export type Compiler = {
     tokens: {Token},
     keys: Keys,
+
+    currToken: string,
 }
 
 return nil

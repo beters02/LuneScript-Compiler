@@ -24,10 +24,10 @@ function Parser.parse(self: types.Compiler)
 
         local tokstr = v._value
         if v._type == "op" then
-            tokstr = self.keys.op[v._value]
+            tokstr = self.keys.op[v._value] .. " "
         end
 
-        if v._type == "expr" then
+        if v._type == "expr" and self.keys.expr[v._value] then
             tokstr = self.keys.expr[v._value] .. " "
         end
 

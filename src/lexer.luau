@@ -18,66 +18,68 @@ local function createToken(self: types.Compiler, tokenStr: string): types.Token
         end
     end
 
-    if string.find(tokenStr, "%(") then foundType = "call" end
+    if string.find(tokenStr, "%(") then 
+        foundType = "call" 
+    elseif string.find(tokenStr, "%)") then
+        foundType = "expr" 
+    end
     foundType = foundType or "def"
 
     return {_type = foundType, _value = tokenStr, _isEnd = isEnd} :: types.Token
 end
 
-function Lexer.Lex(self: types.Compiler, byteStr: string)
-    local currtok = ""
-    local lastc = ""
+local function finalizeToken(self: types.Compiler, tokenStr: string)
+    local token = false
 
-    local function finalizeToken(tokenStr)
-        local token = false
+    if tokenStr ~= "" and tokenStr ~= "\n" then
+        token = createToken(self, tokenStr)
+        self.currToken = ""
 
-        if tokenStr ~= "" and tokenStr ~= "\n" then
-            token = createToken(self, tokenStr)
-            currtok = ""
-
-            local prev = self.tokens[#self.tokens]
-            if prev and prev._type == "expr" and prev._value == "func" then
-                token._type = "func"
-            end
-
-            table.insert(self.tokens, token)
-            return token
+        local prev = self.tokens[#self.tokens]
+        if prev and prev._type == "expr" and prev._value == "func" then
+            token._type = "func"
         end
 
-        if tokenStr == "\n" then
-            self.tokens[#self.tokens]._isEnd = true
-            currtok = ""
-        end
-
-        return token
+        table.insert(self.tokens, token)
+        return
     end
 
+    if tokenStr == "\n" then
+        self.tokens[#self.tokens]._isEnd = true
+        self.currToken = ""
+    end
+end
+
+function Lexer.Lex(self: types.Compiler, byteStr: string)
+    local lastc = ""
+
     byteStr:gsub(".", function(c)
+
         if c == " " then
-            if currtok ~= "" then
-                finalizeToken(currtok)
+            if self.currToken ~= "" then
+                finalizeToken(self, self.currToken)
             end
             return
         end
 
         if c ~= "" then
             if self.keys.op[c] and not self.keys.op[c..c] then
-                finalizeToken(currtok)
-                finalizeToken(c)
+                finalizeToken(self, self.currToken)
+                finalizeToken(self, c)
                 return
             elseif self.keys.op[lastc..c] then
-                finalizeToken(string.sub(currtok, 1, string.len(currtok)-1))
-                finalizeToken(lastc..c)
+                finalizeToken(self, string.sub(self.currToken, 1, string.len(self.currToken)-1))
+                finalizeToken(self, lastc..c)
                 return
             end
             lastc = c
         end
 
-        currtok = currtok .. c
+        self.currToken = self.currToken .. c
     end)
 
     -- final token
-    finalizeToken(currtok)
+    finalizeToken(self, self.currToken)
 
     print(self.tokens)
     return self.tokens

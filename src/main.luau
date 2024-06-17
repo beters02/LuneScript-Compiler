@@ -17,16 +17,16 @@ local testByteStr = [[
     b()
 
     tbl = {a = 1}
-    print(tbl)
+    range(tbl, func (i, v) 
+        print(i .. " = " .. v) 
+    end)
 
-    for i, v in range(tbl) do
-        print(v)
-    end
 ]]
 
 local self: types.Compiler = {
     tokens = {},
     keys = keys,
+    currToken = ""
 }
 
 local function compile()
