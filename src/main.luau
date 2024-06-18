@@ -16,11 +16,10 @@ local testByteStr = [[
     end
     b()
 
-    tbl = {a = 1}
+    tbl = {1, 2, 3, 4, 5, 6, 7}
     range(tbl, func (i, v) 
         print(i .. " = " .. v) 
-    end)
-
+    end, 2, 5)
 ]]
 
 local self: types.Compiler = {
